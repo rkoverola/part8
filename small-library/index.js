@@ -118,6 +118,7 @@ const typeDefs = gql`
       published: Int!
       genres: [String]
     ): Book
+    editAuthor(name: String!, born: Int!): Author
   }
 `;
 
@@ -151,7 +152,7 @@ const resolvers = {
 
   Mutation: {
     addBook: (root, args) => {
-      if (!authors.includes(args.author)) {
+      if (!authors.map((a) => a.name).includes(args.author)) {
         authors.push({ name: args.author, born: null, bookCount: 1 });
       }
       const bookObject = { ...args };
