@@ -90,11 +90,20 @@ let books = [
 
 const typeDefs = gql`
   type Query {
+    bookCount: Int!
+    authorCount: Int
   }
 `;
 
 const resolvers = {
-  Query: {},
+  Query: {
+    bookCount: () => {
+      return books.length;
+    },
+    authorCount: () => {
+      return authors.length;
+    },
+  },
 };
 
 const server = new ApolloServer({
