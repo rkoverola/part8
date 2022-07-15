@@ -1,8 +1,14 @@
 import { useQuery, useMutation } from "@apollo/client";
 import { useState } from "react";
 import { ALL_AUTHORS, EDIT_AUTHOR } from "../queries";
+import Select from "react-select";
 
-const AuthorEditor = () => {
+const AuthorEditor = ({ names }) => {
+  const options = names.map((n) => {
+    return { value: n, label: n };
+  });
+  console.log("Got options", options);
+
   const [name, setName] = useState("");
   const [born, setBorn] = useState("");
   const [editAuthor] = useMutation(EDIT_AUTHOR, {
@@ -15,9 +21,11 @@ const AuthorEditor = () => {
   const handleSubmit = (event) => {
     event.preventDefault();
     console.log("Handling submit with", name, born);
+    const nameString = name.value;
+    console.log("Namestring is", nameString);
     const bornNumber = parseInt(born);
 
-    editAuthor({ variables: { name: name, setBornTo: bornNumber } });
+    editAuthor({ variables: { name: nameString, setBornTo: bornNumber } });
 
     setName("");
     setBorn("");
@@ -26,12 +34,7 @@ const AuthorEditor = () => {
   return (
     <form onSubmit={handleSubmit}>
       <div>
-        name
-        <input
-          type={"text"}
-          value={name}
-          onChange={({ target }) => setName(target.value)}
-        ></input>
+        <Select defaultValue={name} onChange={setName} options={options} />
       </div>
       <div>
         born
@@ -75,7 +78,8 @@ const Authors = (props) => {
           ))}
         </tbody>
       </table>
-      <AuthorEditor />
+      <h2>edit author</h2>
+      <AuthorEditor names={authors.map((a) => a.name)} />
     </div>
   );
 };
