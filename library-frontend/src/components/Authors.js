@@ -4,10 +4,7 @@ import { ALL_AUTHORS } from "../queries";
 const Authors = (props) => {
   const result = useQuery(ALL_AUTHORS);
 
-  if (!props.show) {
-    return null;
-  }
-  if (result.loading) {
+  if (!props.show || result.loading) {
     return null;
   }
   const authors = result.data.allAuthors;
