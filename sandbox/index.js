@@ -30,7 +30,7 @@ const typeDefs = gql`
       name: String!
       phone: String
       street: String!
-      city: String
+      city: String!
     ): Person
     editNumber(name: String!, phone: String!): Person
   }

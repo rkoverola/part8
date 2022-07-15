@@ -1,84 +1,41 @@
+import { useQuery } from "@apollo/client";
 import { useState } from "react";
-import { gql, useQuery } from "@apollo/client";
 
-const ALL_PERSONS = gql`
-  query {
-    allPersons {
-      name
-      phone
-      id
-    }
+import Persons from "./components/Persons";
+import PersonForm from "./components/PersonForm";
+import { ALL_PERSONS } from "./queries";
+import PhoneForm from "./components/PhoneForm";
+
+const Notify = ({ errorMessage }) => {
+  if (!errorMessage) {
+    return null;
   }
-`;
-
-const FIND_PERSON = gql`
-  query findPersonByName($nameToSearch: String!) {
-    findPerson(name: $nameToSearch) {
-      name
-      phone
-      id
-      address {
-        street
-        city
-      }
-    }
-  }
-`;
-
-const Person = ({ person, onClose }) => {
-  return (
-    <div>
-      <h2>{person.name}</h2>
-      <div>
-        {person.address.street} {person.address.city}
-      </div>
-      <div>{person.phone}</div>
-      <button onClick={onClose}>Close</button>
-    </div>
-  );
-};
-
-const Persons = ({ persons }) => {
-  const [nameToSearch, setNameToSearch] = useState(null);
-  const result = useQuery(FIND_PERSON, {
-    variables: { nameToSearch },
-    skip: !nameToSearch,
-  });
-
-  if (nameToSearch && result.data) {
-    return (
-      <Person
-        person={result.data.findPerson}
-        onClose={() => setNameToSearch(null)}
-      />
-    );
-  }
-
-  return (
-    <div>
-      <h2>Persons</h2>
-      {persons.map((p) => {
-        return (
-          <div key={p.name}>
-            {p.name} {p.phone}
-            <button onClick={() => setNameToSearch(p.name)}>
-              Show address
-            </button>
-          </div>
-        );
-      })}
-    </div>
-  );
+  return <div style={{ color: "crimson" }}>{errorMessage}</div>;
 };
 
 const App = () => {
   const result = useQuery(ALL_PERSONS);
+  const [errorMessage, setErrorMessage] = useState(null);
 
   if (result.loading) {
     return <div>Loading...</div>;
   }
 
-  return <Persons persons={result.data.allPersons} />;
+  const notify = (message) => {
+    setErrorMessage(message);
+    setTimeout(() => {
+      setErrorMessage(null);
+    }, 10000);
+  };
+
+  return (
+    <div>
+      <Notify errorMessage={errorMessage} />
+      <Persons persons={result.data.allPersons} />
+      <PersonForm setError={notify} />
+      <PhoneForm setError={notify} />
+    </div>
+  );
 };
 
 export default App;
