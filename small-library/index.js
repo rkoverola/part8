@@ -1,4 +1,21 @@
 const { ApolloServer, gql } = require("apollo-server");
+const mongoose = require("mongoose");
+const { MONGODB_URI } = require("./config");
+const Author = require("./models/Author");
+const Book = require("./models/Book");
+
+console.log("Connecting to MongoDB");
+mongoose
+  .connect(MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log("Connected to MongoDB");
+  })
+  .catch((error) => {
+    console.log("Connection failed: ", error.message);
+  });
 
 let authors = [
   {
@@ -97,11 +114,11 @@ const typeDefs = gql`
   }
 
   type Book {
-    title: String
-    published: Int
-    author: String
-    id: String
-    genres: [String]
+    title: String!
+    published: Int!
+    author: Author!
+    genres: [String!]!
+    id: ID!
   }
 
   type Query {
@@ -124,48 +141,41 @@ const typeDefs = gql`
 
 const resolvers = {
   Author: {
-    bookCount: (root) => {
-      return books.filter((b) => b.author === root.name).length;
+    bookCount: async (root) => {
+      // TODO: Re-implement filtering by author
+      return Book.collection.countDocuments();
     },
   },
 
   Query: {
-    bookCount: () => {
-      return books.length;
+    bookCount: async () => {
+      return Book.collection.countDocuments();
     },
-    authorCount: () => {
-      return authors.length;
+    authorCount: async () => {
+      return Author.collection.countDocuments();
     },
-    allBooks: (root, args) => {
-      const authorFilter = args.author
-        ? (b) => b.author === args.author
-        : (b) => b;
-      const genreFilter = args.genre
-        ? (b) => b.genres.includes(args.genre)
-        : (b) => b;
-      return books.filter(authorFilter).filter(genreFilter);
+    allBooks: async (root, args) => {
+      // TODO: Re-implement filters
+      return Book.find({});
     },
-    allAuthors: () => {
-      return authors;
+    allAuthors: async () => {
+      return Author.find({});
     },
   },
 
   Mutation: {
-    addBook: (root, args) => {
-      if (!authors.map((a) => a.name).includes(args.author)) {
-        authors.push({ name: args.author, born: null, bookCount: 1 });
-      }
-      const bookObject = { ...args };
-      books.push(bookObject);
-      return bookObject;
+    addBook: async (root, args) => {
+      // TODO: Add non-existent authors to authors if added via book
+      const bookToSave = new Book({ ...args });
+      return bookToSave.save();
     },
-    editAuthor: (root, args) => {
-      if (!authors.map((a) => a.name).includes(args.name)) {
+    editAuthor: async (root, args) => {
+      const authorToEdit = Author.findOne({ name: args.name });
+      if (!authorToEdit) {
         return null;
       }
-      const updatedAuthor = { ...args, born: args.setBornTo };
-      authors = authors.map((a) => (a.name === args.name ? updatedAuthor : a));
-      return updatedAuthor;
+      authorToEdit.born = args.setBornTo;
+      return authorToEdit.save();
     },
   },
 };
