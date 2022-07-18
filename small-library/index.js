@@ -1,4 +1,4 @@
-const { ApolloServer, gql } = require("apollo-server");
+const { ApolloServer, gql, UserInputError } = require("apollo-server");
 const mongoose = require("mongoose");
 const { MONGODB_URI } = require("./config");
 const Author = require("./models/Author");
@@ -156,7 +156,7 @@ const resolvers = {
     },
     allBooks: async (root, args) => {
       // TODO: Re-implement filters
-      return Book.find({});
+      return Book.find({}).populate("author");
     },
     allAuthors: async () => {
       return Author.find({});
@@ -164,18 +164,44 @@ const resolvers = {
   },
 
   Mutation: {
+    // FIXME: Doesn't catch errors when more than one field incorrect? null types?
     addBook: async (root, args) => {
-      // TODO: Add non-existent authors to authors if added via book
-      const bookToSave = new Book({ ...args });
-      return bookToSave.save();
+      let existingAuthor = await Author.findOne({ name: args.author });
+      if (!existingAuthor) {
+        existingAuthor = new Author({ name: args.author, bookCount: 1 });
+        try {
+          await existingAuthor.save();
+        } catch (error) {
+          console.log("Caught error");
+          throw new UserInputError(error.message, {
+            invalidArgs: args,
+          });
+        }
+      }
+      const bookToSave = new Book({ ...args, author: existingAuthor });
+      try {
+        await bookToSave.save();
+      } catch (error) {
+        throw new UserInputError(error.message, {
+          invalidArgs: args,
+        });
+      }
+      return bookToSave;
     },
     editAuthor: async (root, args) => {
-      const authorToEdit = Author.findOne({ name: args.name });
+      const authorToEdit = await Author.findOne({ name: args.name });
       if (!authorToEdit) {
         return null;
       }
       authorToEdit.born = args.setBornTo;
-      return authorToEdit.save();
+      try {
+        await authorToEdit.save();
+      } catch (error) {
+        throw new UserInputError(error.message, {
+          invalidArgs: args,
+        });
+      }
+      return authorToEdit;
     },
   },
 };
