@@ -3,15 +3,21 @@ import { ME, ALL_BOOKS } from "../queries";
 
 const Recommend = ({ show }) => {
   const meResult = useQuery(ME);
-  const bookResult = useQuery(ALL_BOOKS);
-  const username = meResult.data.me.username;
-  const favoriteGenre = meResult.data.me.favoriteGenre;
-  const recommendedBooks = bookResult.data.allBooks.filter((b) =>
-    b.genres.includes(favoriteGenre)
-  );
-  if (meResult.loading || !show) {
+
+  // TODO: This will make atleast one query with null and another with correct genre?
+  // How to optimize? Can't make queries within conditionals.
+  const favoriteGenre = meResult.loading
+    ? null
+    : meResult.data.me.favoriteGenre;
+
+  const bookResult = useQuery(ALL_BOOKS, {
+    variables: { genre: favoriteGenre },
+  });
+  if (meResult.loading || bookResult.loading || !show) {
     return null;
   }
+
+  const recommendedBooks = bookResult.data.allBooks;
   return (
     <div>
       <h2>recommendations</h2>

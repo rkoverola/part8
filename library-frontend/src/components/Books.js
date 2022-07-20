@@ -30,17 +30,20 @@ const GenreButton = (props) => {
 const Books = (props) => {
   const [genreFilter, setGenreFilter] = useState(null);
 
-  const result = useQuery(ALL_BOOKS);
+  const bookResult = useQuery(ALL_BOOKS, {
+    variables: { genre: genreFilter },
+  });
+  const genreResult = useQuery(ALL_BOOKS, {
+    variables: { genre: null },
+  });
 
-  if (!props.show || result.loading) {
+  if (!props.show || bookResult.loading || genreResult.loading) {
     return null;
   }
 
-  const books = result.data.allBooks;
-  const filteredBooks = genreFilter
-    ? books.filter((b) => b.genres.includes(genreFilter))
-    : books;
-  const genres = result.data.allBooks.flatMap((b) => b.genres);
+  // TODO: Probably could be done in some other way than having two separate queries
+  const books = bookResult.data.allBooks;
+  const genres = genreResult.data.allBooks.flatMap((b) => b.genres);
   const uniqueGenres = [...new Set(genres)];
   const currentFilterText = genreFilter
     ? `showing: ${genreFilter}`
@@ -61,7 +64,7 @@ const Books = (props) => {
             <th>author</th>
             <th>published</th>
           </tr>
-          {filteredBooks.map((b) => (
+          {books.map((b) => (
             <tr key={b.title}>
               <td>{b.title}</td>
               <td>{b.author.name}</td>

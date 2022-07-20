@@ -10,9 +10,14 @@ const NewBook = (props) => {
   const [genres, setGenres] = useState([]);
 
   const [addBook] = useMutation(ADD_BOOK, {
-    refetchQueries: [{ query: ALL_BOOKS }, { query: ALL_AUTHORS }],
+    // NOTE: Add genre: null here for cache invalidation cuz damn apollo
+    refetchQueries: [
+      { query: ALL_BOOKS, variables: { genre: null } },
+      { query: ALL_AUTHORS },
+    ],
     onError: (error) => {
-      console.log("Got error", error.graphQLErrors[0].message);
+      console.log("Got error in addbook");
+      props.notify("Got error", error.graphQLErrors[0].message);
     },
   });
 

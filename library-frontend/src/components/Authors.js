@@ -3,7 +3,7 @@ import { useState } from "react";
 import { ALL_AUTHORS, EDIT_AUTHOR } from "../queries";
 import Select from "react-select";
 
-const AuthorEditor = ({ names }) => {
+const AuthorEditor = ({ names, notify }) => {
   const options = names.map((n) => {
     return { value: n, label: n };
   });
@@ -14,7 +14,7 @@ const AuthorEditor = ({ names }) => {
   const [editAuthor] = useMutation(EDIT_AUTHOR, {
     refetchQueries: [{ query: ALL_AUTHORS }],
     onError: (error) => {
-      console.log("Got error", error.graphQLErrors[0].message);
+      notify("Got error", error.graphQLErrors[0].message);
     },
   });
 
