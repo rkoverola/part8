@@ -27,18 +27,28 @@ const App = () => {
   const [errorMessage, setErrorMessage] = useState(null);
   const client = useApolloClient();
 
+  const updateCacheForGenre = (book, genre) => {
+    console.log("Updating cache for", book, genre);
+    client.cache.updateQuery(
+      { query: ALL_BOOKS, variables: { genre: genre } },
+      ({ allBooks }) => {
+        return {
+          allBooks: allBooks.concat(book),
+        };
+      }
+    );
+  };
+
   useSubscription(BOOK_ADDED, {
     onSubscriptionData: ({ subscriptionData }) => {
       const addedBook = subscriptionData.data.bookAdded;
       notify(`Added a new book: ${addedBook.title}`);
-      client.cache.updateQuery(
-        { query: ALL_BOOKS, variables: { genre: null } },
-        ({ allBooks }) => {
-          return {
-            allBooks: allBooks.concat(addedBook),
-          };
-        }
-      );
+      const genres = addedBook.genres;
+      console.log("Got genres", genres);
+      genres.forEach((genre) => {
+        updateCacheForGenre(addedBook, genre);
+      });
+      updateCacheForGenre(addedBook, null);
     },
   });
 

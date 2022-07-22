@@ -11,13 +11,6 @@ const { PubSub } = require("graphql-subscriptions");
 const pubsub = new PubSub();
 
 const resolvers = {
-  Author: {
-    bookCount: async (root) => {
-      const books = await Book.find({ author: root });
-      return books.length;
-    },
-  },
-
   Query: {
     bookCount: async () => {
       return Book.collection.countDocuments();
@@ -34,6 +27,7 @@ const resolvers = {
       return Book.find(combinedFilter).populate("author").populate("genres");
     },
     allAuthors: async () => {
+      console.log("Calling allAuthors");
       return Author.find({});
     },
     me: async (root, args, context) => {
@@ -48,7 +42,7 @@ const resolvers = {
       }
       let existingAuthor = await Author.findOne({ name: args.author });
       if (!existingAuthor) {
-        existingAuthor = new Author({ name: args.author, bookCount: 1 });
+        existingAuthor = new Author({ name: args.author, bookCount: 0 });
         try {
           await existingAuthor.save();
         } catch (error) {
@@ -58,10 +52,12 @@ const resolvers = {
           });
         }
       }
+      existingAuthor.bookCount = existingAuthor.bookCount + 1;
       const bookToSave = new Book({ ...args, author: existingAuthor });
       console.log("Saving book", bookToSave);
       try {
         await bookToSave.save();
+        await existingAuthor.save();
       } catch (error) {
         throw new UserInputError(error.message, {
           invalidArgs: args,

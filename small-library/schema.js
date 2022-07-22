@@ -16,6 +16,7 @@ const typeDefs = gql`
     id: String
     born: Int
     bookCount: Int
+    expensiveBookCount: Int
   }
 
   type Book {
